@@ -2,10 +2,23 @@
 
 namespace Centreon\Application\Webservice;
 
+use Centreon\ServiceProvider;
 use CentreonRemote\Application\Webservice\CentreonWebServiceAbstract;
 
 class TopologyWebservice extends CentreonWebServiceAbstract
 {
+
+    /**
+     * List of required services
+     *
+     * @return array
+     */
+    public static function dependencies(): array
+    {
+        return [
+            ServiceProvider::CENTREON_DB_MANAGER,
+        ];
+    }
 
     /**
      * Name of web service object
