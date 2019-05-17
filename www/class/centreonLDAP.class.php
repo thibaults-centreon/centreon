@@ -833,8 +833,10 @@ class CentreonLDAP
         $ldapCg = null;
         try {
             // Searching the default contactgroup chosen in the ldap configuration
-            $resLdap = $this->db->prepare("SELECT ari_value FROM auth_ressource_info " .
-                "WHERE ari_name LIKE 'ldap_default_cg' AND ar_id = :arId");
+            $resLdap = $this->db->prepare(
+                "SELECT ari_value FROM auth_ressource_info " .
+                "WHERE ari_name LIKE 'ldap_default_cg' AND ar_id = :arId"
+            );
             $resLdap->bindValue(':arId', $arId, PDO::PARAM_INT);
             $resLdap->execute();
             while ($result = $resLdap->fetch()) {
@@ -847,21 +849,27 @@ class CentreonLDAP
             }
 
             // Checking if the user isn't already linked to this contactgroup
-            $resCgExist = $this->db->prepare("SELECT COUNT(*) AS `exist` FROM contactgroup_contact_relation " .
-                "WHERE contact_contact_id = :contactId AND contactgroup_cg_id = :ldapCg");
+            $resCgExist = $this->db->prepare(
+                "SELECT COUNT(*) AS `exist` FROM contactgroup_contact_relation " .
+                "WHERE contact_contact_id = :contactId " .
+                "AND contactgroup_cg_id = :ldapCg"
+            );
             $resCgExist->bindValue(':contactId', $contactId, PDO::PARAM_INT);
             $resCgExist->bindValue(':ldapCg', $ldapCg, PDO::PARAM_INT);
             $resCgExist->execute();
             $row = $resCgExist->fetch();
             unset($resCgExist);
             if ($row['exist'] != 0) {
-                // User already linked to this contactgroup
+                // User is already linked to this contactgroup
                 return true;
             }
 
             // Inserting the user to the chosen default contactgroup
-            $resCg = $this->db->prepare("INSERT INTO contactgroup_contact_relation " .
-                "(contactgroup_cg_id, contact_contact_id) VALUES (:ldapDftCg, :contactId)");
+            $resCg = $this->db->prepare(
+                "INSERT INTO contactgroup_contact_relation " .
+                "(contactgroup_cg_id, contact_contact_id) " .
+                "VALUES (:ldapDftCg, :contactId)"
+            );
             $resCg->bindValue(':ldapDftCg', $ldapCg, PDO::PARAM_INT);
             $resCg->bindValue(':contactId', $contactId, PDO::PARAM_INT);
             $resCg->execute();
