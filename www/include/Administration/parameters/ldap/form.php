@@ -104,13 +104,14 @@ $form->addElement('text', 'ldap_search_timeout', _('LDAP search timeout'), $attr
  * LDAP's scanning options sub menu
  */
 $form->addElement('header', 'ldapScanOption', _("LDAP Scan Option"));
+$form->addElement('header', 'ldapScanOption', _("Synchronization Options"));
 // default duration before re-scanning the whole LDAP - by default, a duration of one hour is set
-$form->addElement('text', 'ldap_scan_interval', _('LDAP scan interval [Hours]'), $attrsText2);
+$form->addElement('text', 'ldap_scan_interval', _('LDAP synchronization interval (in hours)'), $attrsText2);
 $form->addRule('ldap_scan_interval', _("Compulsory field"), 'required');
 // option to deactivate the auto-scan of the LDAP - by default auto-scan is ON
 $ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("Yes"), '1');
 $ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("No"), '0');
-$form->addGroup($ldapAutoScan, 'ldap_auto_scan', _("Enable LDAP update on login"), '&nbsp;');
+$form->addGroup($ldapAutoScan, 'ldap_auto_scan', _("Enable LDAP synchronization on login"), '&nbsp;');
 
 // list of contact template available
 $res = $pearDB->query(
