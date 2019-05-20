@@ -45,10 +45,10 @@ $attrsText2 = array("size" => "5");
 $attrsTextarea = array("rows" => "4", "cols" => "60");
 $attrsAdvSelect = null;
 
-$arId = 0;
-if (isset($_REQUEST['ar_id'])) {
-    $arId = $_REQUEST['ar_id'];
-}
+$arId = filter_var(
+    $_POST['ar_id'] ?? $_GET['ar_id'] ?? 0,
+    FILTER_VALIDATE_INT
+);
 
 /**
  * Ldap form
@@ -100,9 +100,22 @@ $form->addElement('text', 'ldap_dns_use_domain', _("Alternative domain for ldap"
 $form->addElement('text', 'ldap_search_limit', _('LDAP search size limit'), $attrsText2);
 $form->addElement('text', 'ldap_search_timeout', _('LDAP search timeout'), $attrsText2);
 
+/*
+ * LDAP's scanning options sub menu
+ */
+$form->addElement('header', 'ldapScanOption', _("LDAP Scan Option"));
+// default duration before re-scanning the whole LDAP - by default, a duration of one hour is set
+$form->addElement('text', 'ldap_scan_interval', _('LDAP scan interval [Hours]'), $attrsText2);
+$form->addRule('ldap_scan_interval', _("Compulsory field"), 'required');
+// option to deactivate the auto-scan of the LDAP - by default auto-scan is ON
+$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("Yes"), '1');
+$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("No"), '0');
+$form->addGroup($ldapAutoScan, 'ldap_auto_scan', _("Enable LDAP update on login"), '&nbsp;');
+
 // list of contact template available
-$query = "SELECT contact_id, contact_name FROM contact WHERE contact_register = '0'";
-$res = $pearDB->query($query);
+$res = $pearDB->query(
+    "SELECT contact_id, contact_name FROM contact WHERE contact_register = '0'"
+);
 $LdapContactTplList = array();
 while ($row = $res->fetch()) {
     $LdapContactTplList[$row['contact_id']] = $row['contact_name'];
@@ -184,14 +197,20 @@ $defaultOpt = array('ldap_auth_enable' => '0',
     'ldap_contact_tmpl' => '0',
     'ldap_default_cg' => '0',
     'ldap_search_limit' => '60',
+    'ldap_auto_scan' => '1',
+    'ldap_scan_interval' => '1',
     'ldap_search_timeout' => '60');
 $gopt = array();
 
 if ($arId) {
     $gopt = $ldapAdmin->getGeneralOptions($arId);
-    $res = $pearDB->query("SELECT `ar_name`, `ar_description`, `ar_enable`
-                            FROM `auth_ressource`
-                            WHERE ar_id = " . $pearDB->escape($arId));
+    $res = $pearDB->prepare(
+        "SELECT `ar_name`, `ar_description`, `ar_enable` " .
+        "FROM `auth_ressource` " .
+        "WHERE ar_id = :arId"
+    );
+    $res->bindValue('arId', $arId, PDO::PARAM_INT);
+    $res->execute();
     while ($row = $res->fetch()) {
         $gopt['ar_name'] = $row['ar_name'];
         $gopt['ar_description'] = $row['ar_description'];
