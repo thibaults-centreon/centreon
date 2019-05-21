@@ -105,12 +105,12 @@ $form->addElement('text', 'ldap_search_timeout', _('LDAP search timeout'), $attr
  */
 $form->addElement('header', 'ldapScanOption', _("Synchronization Options"));
 // option to deactivate the auto-scan of the LDAP - by default auto-scan is ON
-$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("Yes"), '1');
-$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("No"), '0');
-$form->addGroup($ldapAutoScan, 'ldap_auto_scan', _("Enable LDAP synchronization on login"), '&nbsp;');
+$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_sync', null, _("Yes"), '1');
+$ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_sync', null, _("No"), '0');
+$form->addGroup($ldapAutoScan, 'ldap_auto_sync', _("Enable LDAP synchronization on login"), '&nbsp;');
 // default duration before re-scanning the whole LDAP - by default, a duration of one hour is set
-$form->addElement('text', 'ldap_scan_interval', _('LDAP synchronization interval (in hours)'), $attrsText2);
-$form->addRule('ldap_scan_interval', _("Compulsory field"), 'required');
+$form->addElement('text', 'ldap_sync_interval', _('LDAP synchronization interval (in hours)'), $attrsText2);
+$form->addRule('ldap_sync_interval', _("Compulsory field"), 'required');
 
 /**
  * list of contact template available
@@ -200,8 +200,8 @@ $defaultOpt = array('ldap_auth_enable' => '0',
     'ldap_contact_tmpl' => '0',
     'ldap_default_cg' => '0',
     'ldap_search_limit' => '60',
-    'ldap_auto_scan' => '1',
-    'ldap_scan_interval' => '1',
+    'ldap_auto_sync' => '1',
+    'ldap_sync_interval' => '1',
     'ldap_search_timeout' => '60');
 $gopt = array();
 
