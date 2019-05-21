@@ -329,7 +329,7 @@ if ($form->validate()) {
             $values['ldap_contact_tmpl'] = "";
         }
 
-        if (!isset($values['ldap_contact_tmpl'])) {
+        if (!isset($values['ldap_default_cg'])) {
             $values['ldap_default_cg'] = "";
         }
 
