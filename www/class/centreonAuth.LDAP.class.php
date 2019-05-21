@@ -211,16 +211,15 @@ class CentreonAuthLDAP
             // Get ldap user informations
             $userInfos = $this->ldap->getEntry($userDn);
             $userDisplay = $userInfos[$this->ldap->getAttrName('user', 'name')];
-
             // Get the first if there are multiple entries
             if (is_array($userDisplay)) {
                 $userDisplay = $userDisplay[0];
             }
             // Replace space by underscore
             $userDisplay = str_replace(array(' ', ','), '_', $userDisplay);
-
             // Delete parenthesis
             $userDisplay = str_replace(array('(', ')'), '', $userDisplay);
+            //getting user's email
             $userEmail = "'".$this->contactInfos['contact_email']."'";
             if (isset($userInfos[$this->ldap->getAttrName('user', 'email')])
                 && trim($userInfos[$this->ldap->getAttrName('user', 'email')]) != ''
@@ -234,6 +233,7 @@ class CentreonAuthLDAP
                     $userEmail = "'" . $userInfos[$this->ldap->getAttrName('user', 'email')] . "'";
                 }
             }
+            //getting user's pager
             $userPager = "'".$this->contactInfos['contact_pager']."'";
             if (isset($userInfos[$this->ldap->getAttrName('user', 'pager')])
                 && trim($userInfos[$this->ldap->getAttrName('user', 'pager')]) != ''
@@ -247,8 +247,12 @@ class CentreonAuthLDAP
                     $userPager = "'" . $userInfos[$this->ldap->getAttrName('user', 'pager')] . "'";
                 }
             }
+
+            /**
+             * Searching if the user already exist in the DB or not
+             */
             if (isset($this->contactInfos['contact_id'])) {
-                // Update the user dn and extended informations for user
+                // Updating the user DN and extended informations
                 $this->CentreonLog->insertLog(3, "LDAP AUTH : Update user DN for user " .
                     html_entity_decode($this->contactInfos['contact_alias'], ENT_QUOTES, 'UTF-8'));
                 $queryUpdateExtInfos = "UPDATE contact SET
@@ -268,7 +272,13 @@ class CentreonAuthLDAP
                 }
                 $this->contactInfos['contact_ldap_dn'] = $userDn;
 
-                // try to update user groups from AD
+                // checking if the LDAP synchronization is enabled or not
+                if (!$this->ldap->isLoginSyncEnabled($this->arId)) {
+                    $this->CentreonLog->insertLog(3, 'LDAP AUTH : auto LDAP synchronisation is disabled');
+                    return true;
+                }
+
+                // trying to update user groups from LDAP
                 try {
                     include_once(realpath(__DIR__ .  '/centreonContactgroup.class.php'));
                     $cgs = new CentreonContactgroup($this->pearDB);
@@ -279,7 +289,10 @@ class CentreonAuthLDAP
 
                 return true;
             } else {
-                // Find the template ID
+                /**
+                 * The current user wasn't found. Adding him to the DB
+                 * First, searching if a contact template has been specified in the LDAP parameters
+                 */
                 $query = "SELECT ari_value
                           FROM `auth_ressource_info` a, `contact` c
                           WHERE a.`ari_name` = 'ldap_contact_tmpl'
@@ -293,7 +306,7 @@ class CentreonAuthLDAP
                 }
                 $tmplId = $row['ari_value'];
 
-                // Insert user in database
+                // Inserting the new user in the database
                 $query = "INSERT INTO contact
                     (contact_template_id, contact_alias, contact_name, contact_auth_type, contact_ldap_dn, ar_id,
                     contact_email, contact_pager, contact_oreon, contact_activate, contact_register,
@@ -305,12 +318,16 @@ class CentreonAuthLDAP
                 try {
                     $this->pearDB->query($query);
 
-                    // Get the contact_id
+                    // Retrieving the created contact_id
                     $query = "SELECT contact_id FROM contact
                         WHERE contact_ldap_dn = '" . $this->pearDB->escape($userDn) . "'";
                     $res = $this->pearDB->query($query);
                     $row = $res->fetch();
                     $this->contactInfos['contact_id'] = $row['contact_id'];
+
+                    /**
+                     * Searching the user's affiliated contactgroups in the LDAP
+                     */
                     $listGroup = $this->ldap->listGroupsForUser($userDn);
                     $listGroupStr = "";
                     foreach ($listGroup as $gName) {
@@ -325,8 +342,8 @@ class CentreonAuthLDAP
                     $query2 = "SELECT cg_id FROM contactgroup WHERE cg_name IN (" . $listGroupStr . ")";
                     $res2 = $this->pearDB->query($query2);
 
-                    // Insert the relation between the LDAP's contactgroups and the user
-                    // Moving the prepare statement before the while loop for better performances
+                    // Inserting the relation between the LDAP's contactgroups and the user
+                    // @internal Moving the prepare statement before the while loop for better performances
                     $stmt = $this->pearDB->prepare(
                         "INSERT INTO contactgroup_contact_relation (contactgroup_cg_id, contact_contact_id) " .
                         "VALUES (:ldapCg, :contactId)"
@@ -336,14 +353,15 @@ class CentreonAuthLDAP
                         $stmt->bindValue(':contactId', $this->contactInfos['contact_id'], PDO::PARAM_INT);
                         $stmt->execute();
                     }
-                    // Insert the relation between the LDAP's default contactgroup and the user
-                    // returns true if everything goes well
+                    // Inserting the relation between the LDAP's default contactgroup and the user
+                    // @returns true if everything goes well
                     return $this->ldap->addUserToLdapDefautCg(
                         $this->arId,
                         $this->contactInfos['contact_id']
                     );
                 } catch (\PDOException $e) {
-                    // Nothing
+                    $this->CentreonLog->insertLog(3, 'Error processing new user ' . $userDisplay .
+                        ' from ldap id : ' . $this->arId);
                 }
             }
         }

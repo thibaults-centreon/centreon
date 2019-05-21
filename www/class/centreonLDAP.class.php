@@ -823,6 +823,9 @@ class CentreonLDAP
     /**
      * Set a relation between the LDAP's default contactgroup and the user
      *
+     * @internal Method needed for the user's manual and auto import from the LDAP
+     * @since 18.10
+     *
      * @param int $arId : The Id of the chosen LDAP, from which we'll find the default contactgroup
      * @param int $contactId : The Id of the contact to be added
      *
@@ -868,12 +871,50 @@ class CentreonLDAP
             $resCg = $this->db->prepare(
                 "INSERT INTO contactgroup_contact_relation " .
                 "(contactgroup_cg_id, contact_contact_id) " .
-                "VALUES (:ldapDftCg, :contactId)"
+                "VALUES (:ldapDefaultCg, :contactId)"
             );
-            $resCg->bindValue(':ldapDftCg', $ldapCg, PDO::PARAM_INT);
+            $resCg->bindValue(':ldapDefaultCg', $ldapCg, PDO::PARAM_INT);
             $resCg->bindValue(':contactId', $contactId, PDO::PARAM_INT);
             $resCg->execute();
             unset($resCg);
+        } catch (\PDOException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * If the option is checked in the LDAP parameter form, we don't sync the LDAP user's modification when login
+     *
+     * @internal Method needed for the user's auto import from the LDAP
+     * @since 18.10
+     *
+     * @param integer $arId : the Id of the current LDAP
+     * @return boolean
+     */
+    public function isLoginSyncEnabled (int $arId = null): bool
+    {
+        try {
+            // checking if the synchronization is disabled
+            $resSync = $this->db->prepare(
+                "SELECT ari_value AS `syncEnabled` FROM auth_ressource_info " .
+                "WHERE ari_name LIKE 'ldap_auto_sync' AND ar_id = :arId"
+            );
+            $resSync->bindValue(':arId', $arId, PDO::PARAM_INT);
+            $resSync->execute();
+            /*
+            while ($result = $resLdap->fetch()) {
+                $ldapCg = $result['syncEnabled'];
+            }
+            unset($resLdap);
+*/
+            $result = $resSync->fetch();
+            unset($resSync);
+
+            if (!$result['syncEnabled']) {
+                // the sync is disabled
+                return false;
+            }
         } catch (\PDOException $e) {
             return false;
         }
@@ -902,6 +943,7 @@ class CentreonLdapAdmin
     /**
      * Get ldap parameters
      *
+     * @todo sanitize the inputs to avoid XSS
      * @return array
      */
     public function getLdapParameters()
