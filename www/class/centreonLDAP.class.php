@@ -933,7 +933,9 @@ class CentreonLdapAdmin
             'user_pager',
             'group_filter',
             'group_name',
-            'group_member'
+            'group_member',
+            'ldap_auto_sync',
+            'ldap_sync_interval'
         );
         return $tab;
     }
