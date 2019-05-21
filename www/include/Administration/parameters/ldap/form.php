@@ -100,20 +100,21 @@ $form->addElement('text', 'ldap_dns_use_domain', _("Alternative domain for ldap"
 $form->addElement('text', 'ldap_search_limit', _('LDAP search size limit'), $attrsText2);
 $form->addElement('text', 'ldap_search_timeout', _('LDAP search timeout'), $attrsText2);
 
-/*
+/**
  * LDAP's scanning options sub menu
  */
-$form->addElement('header', 'ldapScanOption', _("LDAP Scan Option"));
 $form->addElement('header', 'ldapScanOption', _("Synchronization Options"));
-// default duration before re-scanning the whole LDAP - by default, a duration of one hour is set
-$form->addElement('text', 'ldap_scan_interval', _('LDAP synchronization interval (in hours)'), $attrsText2);
-$form->addRule('ldap_scan_interval', _("Compulsory field"), 'required');
 // option to deactivate the auto-scan of the LDAP - by default auto-scan is ON
 $ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("Yes"), '1');
 $ldapAutoScan[] = $form->createElement('radio', 'ldap_auto_scan', null, _("No"), '0');
 $form->addGroup($ldapAutoScan, 'ldap_auto_scan', _("Enable LDAP synchronization on login"), '&nbsp;');
+// default duration before re-scanning the whole LDAP - by default, a duration of one hour is set
+$form->addElement('text', 'ldap_scan_interval', _('LDAP synchronization interval (in hours)'), $attrsText2);
+$form->addRule('ldap_scan_interval', _("Compulsory field"), 'required');
 
-// list of contact template available
+/**
+ * list of contact template available
+ */
 $res = $pearDB->query(
     "SELECT contact_id, contact_name FROM contact WHERE contact_register = '0'"
 );
@@ -130,7 +131,9 @@ $form->addElement(
     array('id' => 'ldap_contact_tmpl')
 );
 
-// Default contactgroup for imported contact
+/**
+ * Default contactgroup for imported contact
+ */
 $cgAvRoute = './include/common/webServices/rest/internal.php?object=centreon_configuration_contactgroup&action=list';
 $cgDeRoute = './include/common/webServices/rest/internal.php?object=centreon_configuration_contactgroup'
     . '&action=defaultValues&target=contact&field=ldap_default_cg&id=' . $arId;
@@ -143,10 +146,9 @@ $attrContactGroup = array(
 );
 $form->addElement('select2', 'ldap_default_cg', _('Default contactgroup'), array(), $attrContactGroup);
 
+
 $form->addElement('header', 'ldapinfo', _("LDAP Information"));
-
 $form->addElement('header', 'ldapserver', _('LDAP Servers'));
-
 $form->addElement('text', 'bind_dn', _("Bind user"), array("size" => "40", "autocomplete" => "off"));
 $form->addElement('password', 'bind_pass', _("Bind password"), array("size" => "40", "autocomplete" => "off"));
 $form->addElement('select', 'protocol_version', _("Protocol version"), array('3' => 3, '2' => 2));
