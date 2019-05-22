@@ -143,6 +143,9 @@ function updateEndTime() {
             $(".datepicker").first().on('change', function (e) {
                 updateEndTime();
             });
+            $(".timepicker").first().on('change', function (e) {
+                updateEndTime();
+            });
         }
     }
 }
@@ -174,6 +177,9 @@ function updateStartTime() {
             $(".timepicker").first().timepicker("setTime", e.getHours() + ':' + e.getMinutes());
 
             $(".datepicker").last().on('change', function (e) {
+                updateStartTime();
+            });
+            $(".timepicker").last().on('change', function (e) {
                 updateStartTime();
             });
         }

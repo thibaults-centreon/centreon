@@ -158,7 +158,13 @@
         $(".datepicker").first().on('change', function (e) {
             updateEndTime();
         });
+        $(".timepicker").first().on('change', function (e) {
+            updateEndTime();
+        });
         $(".datepicker").last().on('change', function (e) {
+            updateStartTime();
+        });
+        $(".timepicker").last().on('change', function (e) {
             updateStartTime();
         });
     });
